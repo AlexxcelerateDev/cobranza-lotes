@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm ci)",
+      "Bash(npm ci *)",
+      "Bash(npm run *)",
+      "Bash(npm test)",
+      "Bash(npm test *)",
+      "Bash(npm audit)",
+      "Bash(npm audit *)",
+      "Bash(npm ls *)",
+      "Bash(npm outdated *)",
+      "Bash(npx prettier *)",
+      "Bash(npx eslint *)",
+      "Bash(npx astro check *)",
+      "Bash(npx vitest *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "PowerShell(npm ci)",
+      "PowerShell(npm ci *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npm test)",
+      "PowerShell(npm test *)",
+      "PowerShell(npm audit *)",
+      "PowerShell(npx prettier *)",
+      "PowerShell(npx eslint *)"
+    ],
+    "ask": [
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "Bash(npm add *)",
+      "Bash(npm update *)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm i *)",
+      "PowerShell(npm add *)",
+      "PowerShell(npm update *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Read(./.env.*.local)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && npx prettier --write --cache --log-level warn .",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

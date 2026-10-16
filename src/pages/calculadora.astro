@@ -1,0 +1,765 @@
+---
+import Base from "../layouts/Base.astro";
+import {
+  calcular,
+  ESQUEMAS,
+  INICIAL as inicial,
+  UMA,
+  UMBRAL_UMAS,
+} from "../lib/calculadora";
+import { fecha, pesos } from "../lib/formato";
+import { FORM_URL } from "../lib/sitio";
+
+// El primer esquema sale calculado en el HTML: la página se lee entera sin esperar al script.
+const r = calcular(inicial);
+const claseFila = (f: (typeof r.filas)[number]) =>
+  f === r.cruce
+    ? "fila-cruce"
+    : f.tipo === "final" || f.tipo === "anualidad"
+      ? "fila-destacada"
+      : undefined;
+const titulo = "Calculadora de plan de pagos para lotes y umbral antilavado";
+const descripcion =
+  "Arma gratis el calendario de pagos de un lote: enganche, meses sin intereses, interés, anualidades y saldo final. Y en qué pago se alcanzan las 8,025 UMA.";
+---
+
+<Base
+  title={titulo}
+  description={descripcion}
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: titulo,
+    description: descripcion,
+    url: new URL("/calculadora/", Astro.site).href,
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web",
+    inLanguage: "es-MX",
+    isAccessibleForFree: true,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "MXN" },
+  }}
+>
+  <header class="contenedor intro">
+    <p class="eyebrow">Herramienta gratuita para desarrolladoras de lotes</p>
+    <h1>Calculadora de plan de pagos y umbral antilavado</h1>
+    <p class="lede">
+      Arma el calendario de un lote vendido a plazos, con enganche, meses sin
+      intereses, anualidades y saldo final, y ve en qué pago un cliente alcanza
+      las 8,025 UMA que obligan a revisar el aviso antilavado desde febrero de
+      2026.
+    </p>
+  </header>
+
+  <div class="contenedor rejilla">
+    <form
+      class="panel formulario"
+      id="plan"
+      autocomplete="off"
+      aria-labelledby="h-plan"
+    >
+      <h2 id="h-plan">Tu plan</h2>
+      <fieldset class="esquemas">
+        <legend>Esquemas comunes</legend>
+        <div>
+          {ESQUEMAS.map((e, i) => (
+            <button
+              type="button"
+              data-esquema={i}
+              aria-pressed={i === 0 ? "true" : "false"}
+            >
+              {e.nombre}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <div class="campos">
+        <label class="campo ancho">
+          Precio del lote (MXN)
+          <input
+            name="precio"
+            type="number"
+            min="0"
+            step="1000"
+            inputmode="numeric"
+            value={inicial.precio}
+          />
+        </label>
+        <div class="campo ancho">
+          <label for="eng">Enganche</label>
+          <div class="en-linea">
+            <input
+              id="eng"
+              name="eng"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              value={inicial.eng}
+            />
+            <select name="engTipo" aria-label="Unidad del enganche">
+              <option value="pct" selected={inicial.engTipo === "pct"}>
+                %
+              </option>
+              <option value="mxn" selected={inicial.engTipo === "mxn"}>
+                $
+              </option>
+            </select>
+          </div>
+        </div>
+        <label class="campo">
+          Plazo (meses)
+          <input
+            name="meses"
+            type="number"
+            min="1"
+            max="360"
+            step="1"
+            value={inicial.meses}
+          />
+        </label>
+        <label class="campo">
+          Firma del contrato
+          <input name="firma" type="date" value={inicial.firma} />
+        </label>
+        <label class="campo">
+          Meses sin intereses
+          <input
+            name="msi"
+            type="number"
+            min="0"
+            step="1"
+            value={inicial.msi}
+          />
+        </label>
+        <label class="campo">
+          Interés mensual después (%)
+          <input
+            name="tasa"
+            type="number"
+            min="0"
+            step="0.05"
+            value={inicial.tasa}
+          />
+        </label>
+        <label class="campo">
+          Anualidades (número)
+          <input
+            name="anN"
+            type="number"
+            min="0"
+            step="1"
+            value={inicial.anN}
+          />
+        </label>
+        <label class="campo">
+          Monto de cada anualidad
+          <input
+            name="anMonto"
+            type="number"
+            min="0"
+            step="100"
+            value={inicial.anMonto}
+          />
+        </label>
+        <label class="campo ancho">
+          Pago final o contra escritura (% del precio)
+          <input
+            name="finalPct"
+            type="number"
+            min="0"
+            max="100"
+            step="any"
+            value={inicial.finalPct}
+          />
+        </label>
+      </div>
+      <fieldset>
+        <legend>Mensualidad fija (opcional)</legend>
+        <div class="campos">
+          <label class="campo">
+            Monto
+            <input
+              name="fija"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Se calcula"
+              value={inicial.fija || ""}
+            />
+          </label>
+          <label class="campo">
+            Número de mensualidades
+            <input
+              name="nMens"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="= plazo"
+              value={inicial.nMens || ""}
+            />
+          </label>
+        </div>
+        <p class="k">
+          Con mensualidad fija, lo que falte se paga como saldo final en el
+          último mes y se ignoran el interés y el pago final.
+        </p>
+      </fieldset>
+      <label class="campo">
+        Valor diario de la UMA
+        <input
+          name="uma"
+          type="number"
+          min="0"
+          step="0.01"
+          value={inicial.uma}
+        />
+      </label>
+      <p class="k">
+        UMA de 2026: ${UMA}. Ajústala al valor vigente publicado por el INEGI.
+      </p>
+    </form>
+
+    <div class="columna">
+      <section class="panel" aria-labelledby="h-resumen">
+        <h2 id="h-resumen">Resumen</h2>
+        <p class="callout callout-bad" role="alert" data-error hidden></p>
+        <div data-resultado class="resultado">
+          <dl class="stats">
+            <div>
+              <dt>Enganche</dt>
+              <dd class="v" data-out="enganche">
+                {r.enganche}
+              </dd>
+              <dd class="k" data-out="engancheNota">
+                {r.engancheNota}
+              </dd>
+            </div>
+            <div>
+              <dt>Mensualidad</dt>
+              <dd class="v" data-out="mensualidad">
+                {r.mensualidad}
+              </dd>
+              <dd class="k" data-out="mensualidadNota">
+                {r.mensualidadNota}
+              </dd>
+            </div>
+            <div>
+              <dt>Total que paga el comprador</dt>
+              <dd class="v" data-out="total">
+                {r.total}
+              </dd>
+              <dd class="k" data-out="totalNota">
+                {r.totalNota}
+              </dd>
+            </div>
+          </dl>
+          <div class="callout callout-warn" data-final hidden={!r.final}>
+            <strong data-out="finalTitulo">{r.final?.titulo}</strong>
+            <p data-out="finalTexto">{r.final?.texto}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-umbral" data-resultado>
+        <h2 id="h-umbral">Umbral antilavado</h2>
+        <dl class="stats">
+          <div>
+            <dt>8,025 UMA</dt>
+            <dd class="v" data-out="umbral">
+              {r.umbral}
+            </dd>
+          </div>
+          <div>
+            <dt>Lo más que paga en 6 meses</dt>
+            <dd class="v" data-out="ventana">
+              {r.ventana}
+            </dd>
+            <dd class="k" data-out="ventanaNota">
+              {r.ventanaNota}
+            </dd>
+          </div>
+        </dl>
+        <meter
+          min="0"
+          max="1"
+          low="0.75"
+          high="0.999"
+          optimum="0"
+          value={Math.min(r.proporcion, 1)}
+          aria-label="Proporción del umbral antilavado"
+        ></meter>
+        <div
+          class:list={["callout", r.cruce ? "callout-bad" : "callout-ok"]}
+          aria-live="polite"
+          data-alerta
+        >
+          <strong data-out="alertaTitulo">{r.alerta.titulo}</strong>
+          <p data-out="alertaTexto">{r.alerta.texto}</p>
+        </div>
+      </section>
+
+      <section class="panel cta" aria-labelledby="h-cta">
+        <h2 id="h-cta">¿Llevas esto en Excel para cada comprador?</h2>
+        <p>
+          Buscamos 5 desarrolladoras para un piloto gratuito: migramos tu
+          cobranza, tus compradores consultan su estado de cuenta en línea y
+          recibes estas alertas para toda tu cartera.
+        </p>
+        <div class="acciones">
+          <a class="btn" href={FORM_URL}>
+            Quiero el piloto
+          </a>
+          <a class="btn btn-claro" href="/demo/">
+            Ver el portal de ejemplo
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <section
+      class="panel calendario"
+      aria-labelledby="h-calendario"
+      data-resultado
+    >
+      <div class="calendario-cabeza">
+        <h2 id="h-calendario">Calendario de pagos</h2>
+        <button class="btn btn-chico" type="button" data-copiar>
+          Copiar para Excel
+        </button>
+      </div>
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Concepto</th>
+              <th scope="col" class="num">
+                Pago
+              </th>
+              <th scope="col" class="num">
+                Interés
+              </th>
+              <th scope="col" class="num">
+                Saldo
+              </th>
+            </tr>
+          </thead>
+          <tbody data-filas>
+            {r.filas.map((f) => (
+              <tr class={claseFila(f)}>
+                <td>{fecha(f.fecha)}</td>
+                <td>{f.concepto}</td>
+                <td class="num">{pesos(f.monto)}</td>
+                <td class="num">{f.interes ? pesos(f.interes) : "—"}</td>
+                <td class="num">{pesos(f.saldo)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <article class="contenedor guia">
+    <section aria-labelledby="h-cuando">
+      <h2 id="h-cuando">¿Cuándo un comprador alcanza el umbral antilavado?</h2>
+      <p>
+        Desde la reforma de febrero de 2026, recibir recursos de un cliente para
+        un desarrollo inmobiliario por 8,025 UMA o más es una operación que hay
+        que revisar para el aviso antilavado. Con la UMA de 2026 son{" "}
+        {pesos(UMA * UMBRAL_UMAS)}. La ley acumula las operaciones de un mismo
+        cliente en periodos de seis meses, así que la calculadora suma todo lo
+        que paga en cada ventana de seis meses y te dice con qué pago llega al
+        umbral.
+      </p>
+      <p>
+        Con mensualidades normales casi nunca pasa: un lote de $450,000 con 20 %
+        de enganche y 36 meses sin intereses nunca junta más de $140,000 en seis
+        meses, el 15 % del umbral. Lo que dispara la revisión es:
+      </p>
+      <ul>
+        <li>los enganches altos y los pagos de contado;</li>
+        <li>los saldos finales y los pagos contra escritura;</li>
+        <li>el mismo cliente con varios lotes, porque sus pagos se suman;</li>
+        <li>los pagos adelantados.</li>
+      </ul>
+    </section>
+    <section aria-labelledby="h-como">
+      <h2 id="h-como">Cómo se calcula el plan</h2>
+      <ul>
+        <li>
+          Las mensualidades se redondean a pesos y la última absorbe la
+          diferencia.
+        </li>
+        <li>
+          Después de los meses sin intereses, el saldo se amortiza en pagos
+          iguales (sistema francés) a la tasa mensual que indiques. Los
+          intereses corren solo sobre el saldo de las mensualidades.
+        </li>
+        <li>Las anualidades vencen en los meses 12, 24, 36…</li>
+        <li>
+          Con mensualidad fija, lo que falte es un saldo final en el último mes.
+          Es el esquema de muchos anuncios, y conviene que el comprador lo sepa
+          desde la firma.
+        </li>
+        <li>
+          Si el día de la firma no existe en un mes (un 31 en febrero), el pago
+          vence el último día de ese mes.
+        </li>
+      </ul>
+      <p class="k">
+        Cálculo orientativo. Confirma el criterio antilavado con la persona
+        responsable de cumplimiento de tu desarrolladora.
+      </p>
+    </section>
+  </article>
+</Base>
+
+<script>
+  import {
+    calcular,
+    ESQUEMAS,
+    type Entrada,
+    type Resultado,
+  } from "../lib/calculadora";
+  import { fecha, pesos } from "../lib/formato";
+
+  function $<T extends Element>(selector: string): T {
+    const el = document.querySelector<T>(selector);
+    if (!el) throw new Error(`Falta ${selector} en la página`);
+    return el;
+  }
+
+  const form = $<HTMLFormElement>("#plan");
+  const campo = (name: string) => {
+    const el = form.elements.namedItem(name);
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement))
+      throw new Error(`Falta el campo ${name}`);
+    return el;
+  };
+  const num = (name: string) => parseFloat(campo(name).value) || 0;
+  const leer = (): Entrada => ({
+    precio: num("precio"),
+    eng: num("eng"),
+    engTipo: campo("engTipo").value === "mxn" ? "mxn" : "pct",
+    meses: num("meses"),
+    firma: campo("firma").value,
+    msi: num("msi"),
+    tasa: num("tasa"),
+    anN: num("anN"),
+    anMonto: num("anMonto"),
+    finalPct: num("finalPct"),
+    fija: num("fija"),
+    nMens: num("nMens"),
+    uma: num("uma"),
+  });
+
+  const error = $<HTMLElement>("[data-error]");
+  const resultados = document.querySelectorAll<HTMLElement>("[data-resultado]");
+  const salida = (k: string, texto: string) => {
+    $(`[data-out="${k}"]`).textContent = texto;
+  };
+  let ultimo: Resultado | null = null;
+
+  function pintar() {
+    try {
+      ultimo = calcular(leer());
+    } catch (e) {
+      ultimo = null;
+      error.textContent = `${e instanceof Error ? e.message : String(e)}. Baja el enganche, las anualidades o el pago final.`;
+      error.hidden = false;
+      resultados.forEach((el) => (el.hidden = true));
+      return;
+    }
+    const r = ultimo;
+    error.hidden = true;
+    resultados.forEach((el) => (el.hidden = false));
+    for (const k of [
+      "enganche",
+      "engancheNota",
+      "mensualidad",
+      "mensualidadNota",
+      "total",
+      "totalNota",
+      "umbral",
+      "ventana",
+      "ventanaNota",
+    ] as const)
+      salida(k, r[k]);
+    $<HTMLElement>("[data-final]").hidden = !r.final;
+    salida("finalTitulo", r.final?.titulo ?? "");
+    salida("finalTexto", r.final?.texto ?? "");
+    $<HTMLMeterElement>("meter").value = Math.min(r.proporcion, 1);
+    const alerta = $<HTMLElement>("[data-alerta]");
+    alerta.classList.toggle("callout-bad", r.cruce !== null);
+    alerta.classList.toggle("callout-ok", r.cruce === null);
+    salida("alertaTitulo", r.alerta.titulo);
+    salida("alertaTexto", r.alerta.texto);
+
+    // Los textos son números y conceptos propios: nada que venga de fuera llega a `innerHTML`.
+    $("[data-filas]").innerHTML = r.filas
+      .map((f) => {
+        const clase =
+          f === r.cruce
+            ? "fila-cruce"
+            : f.tipo === "final" || f.tipo === "anualidad"
+              ? "fila-destacada"
+              : "";
+        return `<tr class="${clase}"><td>${fecha(f.fecha)}</td><td>${f.concepto}</td><td class="num">${pesos(f.monto)}</td><td class="num">${f.interes ? pesos(f.interes) : "—"}</td><td class="num">${pesos(f.saldo)}</td></tr>`;
+      })
+      .join("");
+  }
+
+  const botones =
+    document.querySelectorAll<HTMLButtonElement>("[data-esquema]");
+  form.addEventListener("input", () => {
+    botones.forEach((b) => b.setAttribute("aria-pressed", "false"));
+    pintar();
+  });
+  form.addEventListener("submit", (e) => e.preventDefault());
+  botones.forEach((boton) =>
+    boton.addEventListener("click", () => {
+      const esquema = ESQUEMAS[Number(boton.dataset["esquema"])];
+      if (!esquema) return;
+      for (const [k, v] of Object.entries(esquema.valores)) {
+        const el = campo(k);
+        // Mensualidad fija y su número: vacíos cuando valen 0, para que se vea el placeholder.
+        el.value =
+          v === 0 && el instanceof HTMLInputElement && el.placeholder
+            ? ""
+            : String(v);
+      }
+      botones.forEach((b) =>
+        b.setAttribute("aria-pressed", String(b === boton)),
+      );
+      pintar();
+    }),
+  );
+
+  const copiar = $<HTMLButtonElement>("[data-copiar]");
+  copiar.addEventListener("click", async () => {
+    if (!ultimo) return;
+    const tsv = [
+      "Fecha\tConcepto\tPago\tInterés\tSaldo",
+      ...ultimo.filas.map((f) =>
+        [f.fecha, f.concepto, f.monto, f.interes, f.saldo].join("\t"),
+      ),
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(tsv);
+      copiar.textContent = "Copiado";
+    } catch {
+      copiar.textContent = "No se pudo copiar";
+    }
+    setTimeout(() => (copiar.textContent = "Copiar para Excel"), 1800);
+  });
+
+  // El navegador puede restaurar valores del formulario al volver atrás: se recalcula al cargar.
+  pintar();
+</script>
+
+<style>
+  .intro {
+    display: grid;
+    gap: 0.75rem;
+    padding-block: clamp(2rem, 6vw, 3.5rem) 2rem;
+
+    & h1 {
+      max-inline-size: 22ch;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+  }
+
+  .rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 25rem) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+
+    @media (max-width: 56rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .columna {
+    display: grid;
+    gap: 1.25rem;
+    min-inline-size: 0;
+  }
+
+  .calendario {
+    grid-column: 1 / -1;
+  }
+
+  .calendario-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .calendario .tabla {
+    max-block-size: 34rem;
+    overflow-y: auto;
+  }
+
+  .calendario th {
+    position: sticky;
+    inset-block-start: 0;
+    background: var(--surface);
+  }
+
+  /* `:global`: el script repinta las filas con `innerHTML`, sin el atributo del CSS con ámbito. */
+  .calendario :global(.fila-destacada td) {
+    background: var(--warn-soft);
+  }
+
+  .calendario :global(.fila-cruce td) {
+    background: var(--bad-soft);
+    font-weight: 600;
+  }
+
+  .resultado {
+    display: grid;
+    gap: 1rem;
+  }
+
+  fieldset {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  legend {
+    margin-block-end: 0.5rem;
+    padding: 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .esquemas div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .esquemas button {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+    }
+
+    &[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+  }
+
+  .campos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+    align-items: end;
+  }
+
+  .campo {
+    display: grid;
+    gap: 0.3rem;
+    min-inline-size: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .ancho {
+    grid-column: 1 / -1;
+  }
+
+  input,
+  select {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 2.6rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+
+    &:hover {
+      border-color: var(--muted);
+    }
+  }
+
+  .en-linea {
+    display: flex;
+    gap: 0.4rem;
+
+    & select {
+      flex: none;
+      inline-size: 4.5rem;
+    }
+  }
+
+  .cta {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+
+    & p {
+      margin: 0;
+    }
+
+    & .btn {
+      border-color: var(--on-accent);
+    }
+
+    & .btn-claro {
+      background: transparent;
+      color: var(--on-accent);
+    }
+  }
+
+  .guia {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+    gap: 2rem 3rem;
+    padding-block: clamp(3rem, 7vw, 4.5rem) 0;
+
+    & h2 {
+      margin-block-end: 1rem;
+      font-size: clamp(1.4rem, 3vw, 1.75rem);
+    }
+
+    & p,
+    & li {
+      max-inline-size: 65ch;
+    }
+
+    & ul {
+      padding-inline-start: 1.2rem;
+    }
+
+    & li + li {
+      margin-block-start: 0.4rem;
+    }
+  }
+</style>

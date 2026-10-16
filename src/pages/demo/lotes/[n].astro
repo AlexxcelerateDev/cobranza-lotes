@@ -1,0 +1,305 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import DemoEncabezado from "../../../components/DemoEncabezado.astro";
+import Plano from "../../../components/Plano.astro";
+import Base from "../../../layouts/Base.astro";
+import {
+  CLABE,
+  contratos,
+  cuenta,
+  type Estatus,
+  HOY,
+  MENSUALIDADES,
+  mensualidadesVencidas,
+  MORATORIO,
+  PRECIO,
+  referencia,
+} from "../../../lib/cartera";
+import { fecha, pesos } from "../../../lib/formato";
+
+export const getStaticPaths = (() =>
+  contratos().map(({ cliente, contrato }) => ({
+    params: { n: String(contrato.lote) },
+    props: { cliente, contrato },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { cliente, contrato } = Astro.props;
+const e = cuenta(contrato, HOY);
+const ESTATUS: Record<Estatus, [string, string]> = {
+  pagada: ["chip-ok", "Pagada"],
+  tarde: ["chip-warn", "Pagada con atraso"],
+  vencida: ["chip-bad", "Vencida"],
+  proxima: ["chip-accent", "Próximo pago"],
+  pendiente: ["chip-neutro", "Por vencer"],
+};
+const folio = `LC-M4-L${String(contrato.lote).padStart(2, "0")}`;
+---
+
+<Base
+  title={`Estado de cuenta del lote ${contrato.lote} (demo)`}
+  description={`Ejemplo del estado de cuenta que ve el comprador del lote ${contrato.lote}: saldo, pagos, moratorios, datos para pagar y permisos del desarrollo.`}
+  noindex
+>
+  <DemoEncabezado titulo="Estado de cuenta" lote={contrato.lote} />
+
+  <div class="contenedor rejilla">
+    <div class="columna">
+      <section class="panel" aria-labelledby="h-cliente">
+        <div class="quien">
+          <h2 id="h-cliente">{cliente.nombre}</h2>
+          <span class="k">Manzana 4 · Lote {contrato.lote}</span>
+        </div>
+        <dl class="stats">
+          <div>
+            <dt>Saldo por pagar</dt>
+            <dd class="v">{pesos(e.saldo)}</dd>
+          </div>
+          <div>
+            <dt>Pagado a la fecha</dt>
+            <dd class="v">{pesos(e.pagado)}</dd>
+          </div>
+          <div>
+            <dt>Próximo pago</dt>
+            <dd class="v">{e.proxima ? pesos(e.proxima.importe) : "—"}</dd>
+            <dd class="k">
+              {e.proxima
+                ? `vence el ${fecha(e.proxima.vence)}`
+                : "Contrato liquidado"}
+            </dd>
+          </div>
+        </dl>
+        {contrato.contado ? (
+          <p>
+            <span class="chip chip-ok">Pagado de contado</span>
+          </p>
+        ) : (
+          <div class="avance">
+            <label class="k" for="avance">
+              Mensualidades pagadas: {e.pagadas} de {MENSUALIDADES}
+            </label>
+            <progress id="avance" max={MENSUALIDADES} value={e.pagadas} />
+          </div>
+        )}
+        {e.vencido > 0 && (
+          <div class="callout callout-bad" role="status">
+            <strong>
+              {mensualidadesVencidas(e.vencidas.length)}: {pesos(e.vencido)} +{" "}
+              {pesos(e.moratorio)} de moratorio
+            </strong>
+            <p>
+              Moratorio de {MORATORIO * 100} % mensual sobre cada mensualidad
+              vencida, calculado al {fecha(HOY)}. Paga{" "}
+              {pesos(e.vencido + e.moratorio)} para ponerte al corriente.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section class="panel" aria-labelledby="h-pagos">
+        <h2 id="h-pagos">Pagos del contrato</h2>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Concepto</th>
+                <th scope="col">Vence</th>
+                <th scope="col" class="num">
+                  Importe
+                </th>
+                <th scope="col">Pagado el</th>
+                <th scope="col">Estatus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {e.cuotas.map((q) => (
+                <tr>
+                  <td>{q.concepto}</td>
+                  <td>{fecha(q.vence)}</td>
+                  <td class="num">
+                    {pesos(q.importe)}
+                    {q.moratorio > 0 && (
+                      <small class="moratorio">
+                        + {pesos(q.moratorio)} de moratorio
+                      </small>
+                    )}
+                  </td>
+                  <td>{q.pagadaEl ? fecha(q.pagadaEl) : "—"}</td>
+                  <td>
+                    <span class={`chip ${ESTATUS[q.estatus][0]}`}>
+                      {ESTATUS[q.estatus][1]}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna">
+      <section class="panel" aria-labelledby="h-lote">
+        <h2 id="h-lote">Tu lote</h2>
+        <Plano lote={contrato.lote} />
+        <dl class="kv">
+          <dt>Superficie</dt>
+          <dd>250 m² (10 × 25 m)</dd>
+          <dt>Precio</dt>
+          <dd>{pesos(PRECIO)}</dd>
+          <dt>Plan</dt>
+          <dd>
+            {contrato.contado
+              ? "Contado"
+              : "20 % de enganche + 36 mensualidades sin intereses"}
+          </dd>
+          <dt>Firma del contrato</dt>
+          <dd>{fecha(contrato.firma)}</dd>
+        </dl>
+      </section>
+
+      <section class="panel" aria-labelledby="h-pagar">
+        <h2 id="h-pagar">Cómo pagar</h2>
+        <dl class="pagar">
+          <dt>Transferencia SPEI a la cuenta de la desarrolladora</dt>
+          <dd class="copiable">{CLABE}</dd>
+          <dt>Referencia (siempre la misma para tu lote)</dt>
+          <dd class="copiable">{referencia(contrato)}</dd>
+        </dl>
+        <p class="k">
+          CLABE de ejemplo. Un clic selecciona el dato para copiarlo. Tu pago se
+          refleja aquí cuando la desarrolladora lo concilia.
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="h-documentos">
+        <h2 id="h-documentos">Documentos del desarrollo</h2>
+        <ul class="documentos">
+          <li>
+            <span>Licencia de fraccionamiento</span>
+            <span class="chip chip-ok">Vigente</span>
+            <span class="k">
+              Ayuntamiento de Mérida · folio de ejemplo LF-2024-0183
+            </span>
+          </li>
+          <li>
+            <span>Resolutivo de impacto ambiental</span>
+            <span class="chip chip-ok">Vigente</span>
+            <span class="k">
+              Secretaría de Desarrollo Sustentable · ejemplo
+            </span>
+          </li>
+          <li>
+            <span>Contrato de adhesión registrado ante Profeco</span>
+            <span class="chip chip-ok">Registrado</span>
+            <span class="k">Número de registro de ejemplo</span>
+          </li>
+          <li>
+            <span>Tu contrato de compraventa</span>
+            <span class="chip chip-neutro">PDF</span>
+            <span class="k">
+              Folio {folio} · firmado el {fecha(contrato.firma)}
+            </span>
+          </li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    gap: 1.25rem;
+    align-items: start;
+
+    @media (max-width: 64rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .columna {
+    display: grid;
+    gap: 1.25rem;
+    min-inline-size: 0;
+  }
+
+  .quien {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .avance {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .moratorio {
+    display: block;
+    color: var(--bad);
+    font-size: 0.78rem;
+  }
+
+  .kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 1rem;
+    margin: 0;
+    font-size: 0.9rem;
+
+    & dt {
+      color: var(--muted);
+    }
+
+    & dd {
+      margin: 0;
+      text-align: end;
+    }
+  }
+
+  .pagar {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+
+    & dt {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    & dd {
+      margin: 0 0 0.6rem;
+    }
+  }
+
+  .copiable {
+    padding: 0.5rem 0.7rem;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    background: var(--surface-2);
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 1rem;
+    user-select: all;
+    word-break: break-all;
+  }
+
+  .documentos {
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    font-size: 0.92rem;
+    list-style: none;
+
+    & li {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.15rem 0.75rem;
+    }
+  }
+</style>

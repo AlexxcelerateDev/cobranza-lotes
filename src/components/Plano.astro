@@ -1,0 +1,140 @@
+---
+import { estadoLote, HOY, LOTES } from "../lib/cartera";
+
+interface Props {
+  /** Vista del comprador: solo se marca su lote y no hay enlaces. Sin él, la de la desarrolladora. */
+  lote?: number;
+}
+
+const { lote } = Astro.props;
+const [W, H, G] = [50, 88, 2];
+const lotes = Array.from({ length: LOTES }, (_, i) => {
+  const n = i + 1;
+  const e = estadoLote(n, HOY);
+  const vendido = e.tipo === "vendido" || e.tipo === "atrasado";
+  return {
+    n,
+    x: 10 + (i % 12) * (W + G),
+    y: n <= 12 ? 8 : 134,
+    clase: lote === undefined ? e.tipo : n === lote ? "propio" : "disponible",
+    texto: `Lote ${n}, ${e.texto}`,
+    href: lote === undefined && vendido ? `/demo/lotes/${n}/` : null,
+  };
+});
+---
+
+{lote === undefined ? (
+  <svg viewBox="0 0 640 230" role="group" aria-label="Plano de la manzana 4">
+    <text x="320" y="118" class="calle" text-anchor="middle">
+      CALLE 21
+    </text>
+    {lotes.map((l) =>
+      l.href ? (
+        <a href={l.href} class={`lote ${l.clase}`} aria-label={l.texto}>
+          <rect x={l.x} y={l.y} width={W} height={H} rx="3" />
+          <text x={l.x + W / 2} y={l.y + H / 2 + 5} text-anchor="middle">
+            {l.n}
+          </text>
+        </a>
+      ) : (
+        <g class={`lote ${l.clase}`} role="img" aria-label={l.texto}>
+          <rect x={l.x} y={l.y} width={W} height={H} rx="3" />
+          <text
+            x={l.x + W / 2}
+            y={l.y + H / 2 + 5}
+            text-anchor="middle"
+            aria-hidden="true"
+          >
+            {l.n}
+          </text>
+        </g>
+      ),
+    )}
+  </svg>
+) : (
+  <svg
+    viewBox="0 0 640 230"
+    role="img"
+    aria-label={`Plano de la manzana 4: tu lote es el ${lote}`}
+  >
+    <text x="320" y="118" class="calle" text-anchor="middle">
+      CALLE 21
+    </text>
+    {lotes.map((l) => (
+      <g class={`lote ${l.clase}`}>
+        <rect x={l.x} y={l.y} width={W} height={H} rx="3" />
+        <text x={l.x + W / 2} y={l.y + H / 2 + 5} text-anchor="middle">
+          {l.n}
+        </text>
+      </g>
+    ))}
+  </svg>
+)}
+
+<style>
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+
+  .calle {
+    fill: var(--muted);
+    font: 500 11px var(--font-body);
+    letter-spacing: 0.25em;
+  }
+
+  .lote rect {
+    fill: var(--lot-free);
+    stroke: var(--surface);
+    stroke-width: 1;
+    transition: stroke-width 0.15s;
+  }
+
+  .lote text {
+    fill: var(--ink);
+    font: 600 15px var(--font-body);
+    pointer-events: none;
+  }
+
+  .vendido rect,
+  .propio rect {
+    fill: var(--accent);
+  }
+
+  .atrasado rect {
+    fill: var(--bad);
+  }
+
+  .vendido text,
+  .propio text,
+  .atrasado text {
+    fill: var(--on-accent);
+  }
+
+  .apartado rect,
+  .apartado-vencido rect {
+    fill: var(--gold);
+  }
+
+  .apartado text,
+  .apartado-vencido text {
+    fill: var(--on-gold);
+  }
+
+  .apartado-vencido rect {
+    stroke: var(--bad);
+    stroke-width: 3;
+    stroke-dasharray: 6 4;
+  }
+
+  a.lote:hover rect,
+  a.lote:focus-visible rect {
+    stroke: var(--ink);
+    stroke-width: 3;
+  }
+
+  a.lote:focus {
+    outline: none;
+  }
+</style>

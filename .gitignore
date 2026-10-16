@@ -1,0 +1,12 @@
+node_modules/
+# Salida del build y tipos generados por `astro sync`.
+dist/
+.astro/
+
+.env
+.env.*
+!.env.example
+
+# Personales, nunca compartidos: permisos de Claude por máquina e instrucciones locales.
+.claude/settings.local.json
+CLAUDE.local.md

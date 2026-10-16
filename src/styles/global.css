@@ -1,0 +1,398 @@
+/* Tokens. Claro y oscuro según el sistema con `light-dark()`, sin JavaScript: el navegador ajusta
+   también los controles de formulario. Las familias (`--font-display`, `--font-body`) las define
+   `<Font />` con la API de fuentes de Astro. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f6f8f7, #0d1311);
+  --surface: light-dark(#ffffff, #141c19);
+  --surface-2: light-dark(#eef3f0, #1a2420);
+  --ink: light-dark(#14201b, #e4ece8);
+  --muted: light-dark(#55635c, #9aa9a2);
+  --line: light-dark(#dce4df, #29352f);
+  --accent: light-dark(#1d5a4c, #5db8a1);
+  --accent-hover: light-dark(#164a3e, #7ccab5);
+  --on-accent: light-dark(#ffffff, #0b1210);
+  --accent-soft: light-dark(#e2eee9, #16302a);
+  --ok: light-dark(#17703d, #57c785);
+  --ok-soft: light-dark(#e1f2e7, #132a1d);
+  --warn: light-dark(#8f4d04, #e6a64d);
+  --warn-soft: light-dark(#fbeedb, #2f2412);
+  --bad: light-dark(#b3261e, #f2786c);
+  --bad-soft: light-dark(#fbe5e2, #341816);
+  --gold: light-dark(#e2b552, #c4922f);
+  --on-gold: #1d1606;
+  --lot-free: light-dark(#d3dcd8, #34423d);
+
+  --radius: 14px;
+  --shadow:
+    0 1px 2px rgb(16 32 27 / 0.06), 0 12px 32px -16px rgb(16 32 27 / 0.22);
+  --ancho: 72rem;
+  --gutter: max(1rem, env(safe-area-inset-left), env(safe-area-inset-right));
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 1rem/1.6 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    color: var(--accent-hover);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Layout */
+.contenedor {
+  inline-size: min(100% - 2 * var(--gutter), var(--ancho));
+  margin-inline: auto;
+}
+
+.seccion {
+  padding-block: clamp(3rem, 8vw, 5.5rem);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  max-inline-size: 62ch;
+}
+
+.k {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.num {
+  text-align: end;
+}
+
+/* Botones y enlaces con forma de botón */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: 2.75rem;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--ink);
+  }
+}
+
+.btn-primario {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+
+  &:hover {
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
+    color: var(--on-accent);
+  }
+}
+
+.btn-chico {
+  min-block-size: 2.25rem;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Paneles */
+.panel {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-inline-size: 0;
+  padding: clamp(1.1rem, 3vw, 1.5rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Cifras: `<dl class="stats">` con un `<div>` por cifra */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+
+  & div {
+    display: grid;
+    gap: 0.1rem;
+    align-content: start;
+  }
+
+  & dt {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  & dd {
+    margin: 0;
+  }
+
+  & .v {
+    font-size: 1.45rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Avisos */
+.callout {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
+
+  & p {
+    margin: 0;
+  }
+}
+
+.callout-ok {
+  background: var(--ok-soft);
+
+  & strong {
+    color: var(--ok);
+  }
+}
+
+.callout-warn {
+  background: var(--warn-soft);
+
+  & strong {
+    color: var(--warn);
+  }
+}
+
+.callout-bad {
+  background: var(--bad-soft);
+
+  & strong {
+    color: var(--bad);
+  }
+}
+
+/* Etiquetas de estatus */
+.chip {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.chip-warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.chip-bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.chip-accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.chip-neutro {
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--muted);
+}
+
+/* Barras: `<progress>` para avance y `<meter>` para el umbral, que se colorea solo por tramos
+   (`low`/`high`/`optimum`). */
+progress,
+meter {
+  display: block;
+  inline-size: 100%;
+  block-size: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--accent-soft);
+  appearance: none;
+}
+
+progress::-webkit-progress-bar {
+  background: var(--accent-soft);
+}
+
+progress::-webkit-progress-value {
+  background: var(--accent);
+}
+
+progress::-moz-progress-bar {
+  background: var(--accent);
+}
+
+meter::-webkit-meter-bar {
+  block-size: 0.5rem;
+  border: 0;
+  background: var(--accent-soft);
+}
+
+meter::-webkit-meter-optimum-value {
+  background: var(--ok);
+}
+
+meter::-webkit-meter-suboptimum-value {
+  background: var(--warn);
+}
+
+meter::-webkit-meter-even-less-good-value {
+  background: var(--bad);
+}
+
+meter:-moz-meter-optimum::-moz-meter-bar {
+  background: var(--ok);
+}
+
+meter:-moz-meter-sub-optimum::-moz-meter-bar {
+  background: var(--warn);
+}
+
+meter:-moz-meter-sub-sub-optimum::-moz-meter-bar {
+  background: var(--bad);
+}
+
+/* Tablas: el contenedor hace scroll horizontal en móvil */
+.tabla {
+  position: relative; /* contiene el texto oculto (`position: absolute`) dentro del scroll */
+  overflow-x: auto;
+}
+
+table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th {
+  padding: 0.45rem 0.6rem;
+  border-block-end: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: start;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+td {
+  padding: 0.55rem 0.6rem;
+  border-block-end: 1px solid var(--line);
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+tr:last-child td {
+  border-block-end: 0;
+}
+
+/* Transiciones entre páginas nativas del navegador (cross-document view transitions), sin
+   `<ClientRouter />` ni JavaScript. Donde no hay soporte, la navegación es la normal. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

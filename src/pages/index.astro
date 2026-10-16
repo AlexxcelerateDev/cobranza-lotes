@@ -1,0 +1,617 @@
+---
+import Base from "../layouts/Base.astro";
+import { UMA, UMBRAL_UMAS } from "../lib/calculadora";
+import {
+  contratos,
+  cuenta,
+  HOY,
+  MENSUALIDADES,
+  mensualidadesVencidas,
+} from "../lib/cartera";
+import { fecha, pesos } from "../lib/formato";
+import { FORM_URL, NOMBRE } from "../lib/sitio";
+
+// La tarjeta del encabezado es el estado de cuenta real del lote 7 de la demo.
+const ejemplo = contratos().find(({ contrato }) => contrato.lote === 7);
+const e = ejemplo && cuenta(ejemplo.contrato, HOY);
+const umbral = pesos(UMA * UMBRAL_UMAS);
+
+const modulos = [
+  {
+    titulo: "Inventario y plano",
+    texto:
+      "Tus lotes sobre el plano de lotificación: vendidos, apartados y disponibles en tiempo real. Los apartados vencen solos y tus asesores dejan de vender el mismo lote dos veces.",
+  },
+  {
+    titulo: "Planes de pago y cobranza",
+    texto:
+      "Enganche, meses sin intereses, interés, anualidades y saldo final, con moratorios calculados al día. Recibos y estados de cuenta sin armar nada a mano.",
+  },
+  {
+    titulo: "Portal del comprador",
+    texto:
+      "Cada comprador ve su saldo, sus pagos, su próximo vencimiento y cómo pagar. Menos llamadas de «¿cuánto debo?» y recordatorios listos para WhatsApp.",
+  },
+  {
+    titulo: "Alerta antilavado",
+    texto: `Te avisa cuando lo que un cliente ha pagado en seis meses, sumando todos sus lotes, se acerca a las 8,025 UMA (${umbral}), y ordena su expediente.`,
+  },
+];
+
+const preguntas = [
+  {
+    p: "¿Quién puede unirse al piloto?",
+    r: "Desarrolladoras que venden lotes con financiamiento directo (apartado, enganche y mensualidades) y llevan la cobranza en Excel, en papel o con su contador. Pedimos que el desarrollo tenga su licencia o autorización vigente: tus compradores la ven en su portal.",
+  },
+  {
+    p: "¿Cuánto cuesta?",
+    r: "El piloto es gratuito. Buscamos 5 desarrolladoras para construirlo con contratos reales.",
+  },
+  {
+    p: "¿Tengo que capturar mis contratos otra vez?",
+    r: "No. Nos compartes tu Excel de cobranza y lo migramos nosotros. Antes de mostrarlo a tus compradores, comprobamos que cada plan cuadre con su contrato.",
+  },
+  {
+    p: "¿Un comprador puede ver la información de otro?",
+    r: "No. Cada comprador ve solo su contrato, sus pagos y los documentos del desarrollo.",
+  },
+  {
+    p: "¿La alerta antilavado sustituye a mi responsable de cumplimiento?",
+    r: "No. Calcula cuánto ha pagado cada cliente en cada periodo de seis meses y te avisa antes de que llegue al umbral. La decisión de presentar el aviso es de tu responsable.",
+  },
+];
+---
+
+<Base
+  title={`Cobranza de lotes en abonos, sin Excel | ${NOMBRE}`}
+  description="Cobranza de lotes a plazos para desarrolladoras: planes de pago con moratorios, estados de cuenta en línea, recordatorios por WhatsApp y alerta antilavado. Piloto gratuito."
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: NOMBRE,
+    url: new URL("/", Astro.site).href,
+    inLanguage: "es-MX",
+  }}
+>
+  <section class="hero">
+    <div class="contenedor hero-rejilla">
+      <div class="hero-texto">
+        <p class="eyebrow">
+          Para desarrolladoras que venden lotes con financiamiento directo
+        </p>
+        <h1>La cobranza de tus lotes, al día y sin Excel</h1>
+        <p class="lede">
+          Planes de pago con moratorios, estados de cuenta que tus compradores
+          consultan en línea, recordatorios por WhatsApp y una alerta cuando un
+          cliente se acerca al umbral antilavado.
+        </p>
+        <div class="acciones">
+          <a class="btn btn-primario" href={FORM_URL}>
+            Únete al piloto gratuito
+          </a>
+          <a class="btn" href="/demo/">
+            Ver la demo
+          </a>
+        </div>
+        <p class="k">
+          ¿Solo quieres hacer cuentas? Prueba la{" "}
+          <a href="/calculadora/">calculadora de plan de pagos</a>.
+        </p>
+      </div>
+
+      {ejemplo && e && (
+        <a
+          class="tarjeta"
+          href="/demo/lotes/7/"
+          aria-label="Ejemplo de estado de cuenta del lote 7: abrir la demo"
+        >
+          <span class="tarjeta-cabeza">
+            <span>
+              <strong>{ejemplo.cliente.nombre}</strong>
+              <span class="k">Manzana 4 · Lote 7</span>
+            </span>
+            <span class="chip chip-warn">Demo</span>
+          </span>
+          <span class="tarjeta-cifras">
+            <span>
+              <span class="k">Saldo</span>
+              <span class="cifra">{pesos(e.saldo)}</span>
+            </span>
+            <span>
+              <span class="k">Próximo pago</span>
+              <span class="cifra">
+                {e.proxima ? pesos(e.proxima.importe) : "—"}
+              </span>
+              {e.proxima && (
+                <span class="k">vence el {fecha(e.proxima.vence)}</span>
+              )}
+            </span>
+          </span>
+          <span class="k">
+            Mensualidades pagadas: {e.pagadas} de {MENSUALIDADES}
+          </span>
+          <progress max={MENSUALIDADES} value={e.pagadas} aria-hidden="true" />
+          {e.vencido > 0 && (
+            <span class="callout callout-bad">
+              <strong>
+                {mensualidadesVencidas(e.vencidas.length)}: {pesos(e.vencido)} +{" "}
+                {pesos(e.moratorio)} de moratorio
+              </strong>
+            </span>
+          )}
+        </a>
+      )}
+    </div>
+  </section>
+
+  <section class="seccion" aria-labelledby="h-problema">
+    <div class="contenedor">
+      <p class="eyebrow">El problema</p>
+      <h2 id="h-problema" class="titulo-seccion">
+        Cientos de contratos en una hoja de cálculo
+      </h2>
+      <div class="tres">
+        <article>
+          <h3>Dobles ventas</h3>
+          <p>
+            La disponibilidad vive en un archivo que nadie actualiza a tiempo, y
+            los apartados vencen sin que nadie libere el lote.
+          </p>
+        </article>
+        <article>
+          <h3>Cobranza lenta</h3>
+          <p>
+            Estados de cuenta armados a mano, moratorios recalculados en cada
+            llamada y compradores que no saben cuánto deben.
+          </p>
+        </article>
+        <article>
+          <h3>Antilavado desde febrero de 2026</h3>
+          <p>
+            La reforma pide revisar el aviso cuando lo que recibes de un cliente
+            para un desarrollo inmobiliario llega a 8,025 UMA, y conservar su
+            expediente.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion banda" aria-labelledby="h-modulos">
+    <div class="contenedor">
+      <p class="eyebrow">Qué incluye</p>
+      <h2 id="h-modulos" class="titulo-seccion">
+        Todo lo de tu cobranza, en un solo lugar
+      </h2>
+      <div class="modulos">
+        {modulos.map((m, i) => (
+          <article class="panel modulo">
+            <span class="numero" aria-hidden="true">
+              0{i + 1}
+            </span>
+            <h3>{m.titulo}</h3>
+            <p>{m.texto}</p>
+          </article>
+        ))}
+      </div>
+      <div class="transparencia">
+        <div>
+          <h3>Tus permisos, a la vista de tus compradores</h3>
+          <p>
+            La licencia de fraccionamiento, el resolutivo ambiental y el
+            contrato registrado ante Profeco aparecen en el portal de cada
+            comprador. Vender en regla se nota.
+          </p>
+        </div>
+        <a class="btn" href="/demo/lotes/7/">
+          Ver el portal del comprador
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion" aria-labelledby="h-calculadora">
+    <div class="contenedor dividido">
+      <div>
+        <p class="eyebrow">Calculadora gratuita</p>
+        <h2 id="h-calculadora" class="titulo-seccion">
+          ¿En qué pago tu cliente alcanza el umbral antilavado?
+        </h2>
+        <p class="lede">
+          Arma el plan de pagos de un lote y ve el calendario completo, listo
+          para copiar a Excel, con el pago exacto en que se juntan {umbral} en
+          seis meses.
+        </p>
+        <div class="acciones">
+          <a class="btn btn-primario" href="/calculadora/">
+            Abrir la calculadora
+          </a>
+        </div>
+      </div>
+      <figure class="dato">
+        <p class="dato-cifra">15 %</p>
+        <figcaption>
+          Es lo más que llega a pagar en seis meses, frente al umbral, el
+          comprador de un lote de $450,000 con 20 % de enganche y 36 meses sin
+          intereses. Lo que dispara la revisión son los enganches altos, los
+          pagos de contado, los saldos finales y el mismo cliente con varios
+          lotes.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="seccion banda" aria-labelledby="h-piloto">
+    <div class="contenedor">
+      <p class="eyebrow">Piloto gratuito</p>
+      <h2 id="h-piloto" class="titulo-seccion">
+        Cómo funciona
+      </h2>
+      <ol class="pasos">
+        <li>
+          <h3>Nos compartes tu Excel</h3>
+          <p>
+            El archivo con el que hoy llevas la cobranza, anonimizado si lo
+            prefieres.
+          </p>
+        </li>
+        <li>
+          <h3>Lo migramos y lo cuadramos</h3>
+          <p>
+            Cada plan de pagos, contra su contrato: enganche, mensualidades,
+            anualidades y moratorios.
+          </p>
+        </li>
+        <li>
+          <h3>Tus compradores entran a su portal</h3>
+          <p>
+            Tú ves la cartera, los atrasos y las alertas; ellos, su estado de
+            cuenta.
+          </p>
+        </li>
+      </ol>
+      <div class="acciones centro">
+        <a class="btn btn-primario" href={FORM_URL}>
+          Quiero el piloto
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion" aria-labelledby="h-preguntas">
+    <div class="contenedor angosto">
+      <h2 id="h-preguntas" class="titulo-seccion">
+        Preguntas frecuentes
+      </h2>
+      <div class="preguntas">
+        {preguntas.map(({ p, r }) => (
+          <details>
+            <summary>{p}</summary>
+            <p>{r}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-block: clamp(3rem, 8vw, 6rem);
+    background:
+      radial-gradient(
+        60rem 30rem at 85% 0%,
+        var(--accent-soft),
+        transparent 70%
+      ),
+      var(--bg);
+  }
+
+  .hero-rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 4.5rem);
+    align-items: center;
+
+    @media (max-width: 56rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .hero-texto {
+    display: grid;
+    gap: 1.25rem;
+
+    & h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      letter-spacing: -0.025em;
+    }
+
+    & .k {
+      margin: 0;
+      font-size: 0.92rem;
+    }
+  }
+
+  .tarjeta {
+    display: grid;
+    gap: 0.9rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow:
+      0 1px 2px rgb(16 32 27 / 0.06),
+      0 30px 60px -30px rgb(16 32 27 / 0.35);
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 0.2s;
+    rotate: 1.5deg;
+
+    &:hover {
+      color: var(--ink);
+      transform: translateY(-4px);
+    }
+
+    & > * {
+      display: grid;
+    }
+
+    & .callout {
+      margin-block-start: 0.25rem;
+    }
+  }
+
+  .tarjeta-cabeza {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+
+    & > span:first-child {
+      display: grid;
+    }
+
+    & strong {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+    }
+  }
+
+  .tarjeta-cifras {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    & > span {
+      display: grid;
+      align-content: start;
+    }
+  }
+
+  .cifra {
+    font-size: 1.6rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .titulo-seccion {
+    max-inline-size: 24ch;
+    margin-block: 0.6rem 2rem;
+    font-size: clamp(1.75rem, 4vw, 2.6rem);
+  }
+
+  .tres {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 2rem;
+
+    & article {
+      padding-block-start: 1.25rem;
+      border-block-start: 3px solid var(--accent);
+    }
+
+    & h3 {
+      font-size: 1.25rem;
+    }
+
+    & p {
+      margin-block-end: 0;
+      color: var(--muted);
+    }
+  }
+
+  .banda {
+    border-block: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  /* 4 módulos: en 2 × 2 o en una fila, nunca 3 + 1. */
+  .modulos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+
+    @media (max-width: 36rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    @media (min-width: 68rem) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .modulo {
+    gap: 0.6rem;
+
+    & h3 {
+      font-size: 1.2rem;
+    }
+
+    & p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+  }
+
+  .numero {
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .transparencia {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem 2rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-block-start: 1.25rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+
+    & h3 {
+      font-size: 1.3rem;
+    }
+
+    & p {
+      max-inline-size: 60ch;
+      margin: 0.5rem 0 0;
+    }
+
+    & .btn {
+      border-color: var(--on-accent);
+    }
+  }
+
+  .dividido {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 4rem);
+    align-items: center;
+
+    @media (max-width: 56rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    & .lede {
+      margin-block-end: 1.5rem;
+    }
+  }
+
+  .dato {
+    margin: 0;
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+
+    & figcaption {
+      color: var(--muted);
+    }
+  }
+
+  .dato-cifra {
+    margin: 0 0 0.5rem;
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 9vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .pasos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: paso;
+
+    & li {
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      background: var(--surface);
+      counter-increment: paso;
+
+      &::before {
+        content: counter(paso);
+        display: grid;
+        place-items: center;
+        inline-size: 2.25rem;
+        block-size: 2.25rem;
+        margin-block-end: 1rem;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-family: var(--font-display);
+        font-weight: 700;
+      }
+    }
+
+    & h3 {
+      font-size: 1.15rem;
+    }
+
+    & p {
+      margin-block-end: 0;
+      color: var(--muted);
+    }
+  }
+
+  .centro {
+    justify-content: center;
+    margin-block-start: 2rem;
+  }
+
+  .angosto {
+    max-inline-size: 48rem;
+  }
+
+  .preguntas {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  details {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+
+    & p {
+      margin: 0;
+      padding: 0 1.25rem 1.1rem;
+      color: var(--muted);
+    }
+
+    &[open] summary::after {
+      rotate: 45deg;
+    }
+  }
+
+  summary {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: "+";
+      color: var(--accent);
+      font-size: 1.4rem;
+      line-height: 1;
+      transition: rotate 0.2s;
+    }
+  }
+</style>

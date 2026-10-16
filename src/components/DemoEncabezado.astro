@@ -1,0 +1,84 @@
+---
+import { DESARROLLO, HOY } from "../lib/cartera";
+import { fecha } from "../lib/formato";
+
+interface Props {
+  titulo: string;
+  /** El lote abierto en la vista del comprador. */
+  lote?: number;
+}
+
+const { titulo, lote } = Astro.props;
+---
+
+<header class="contenedor encabezado">
+  <div>
+    <p class="contexto">
+      {DESARROLLO} · Mérida, Yuc. · Corte al {fecha(HOY)}
+      <span class="chip chip-warn">Demo · datos ficticios</span>
+    </p>
+    <h1>{titulo}</h1>
+  </div>
+  <nav class="vistas" aria-label="Vista de la demo">
+    <a
+      href={`/demo/lotes/${lote ?? 7}/`}
+      aria-current={lote === undefined ? undefined : "page"}
+    >
+      Comprador
+    </a>
+    <a href="/demo/" aria-current={lote === undefined ? "page" : undefined}>
+      Desarrolladora
+    </a>
+  </nav>
+</header>
+
+<style>
+  .encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-block: clamp(1.5rem, 5vw, 2.5rem) 1.5rem;
+
+    & h1 {
+      margin-block-start: 0.35rem;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+    }
+  }
+
+  .contexto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    align-items: center;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .vistas {
+    display: inline-flex;
+    padding: 0.25rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+
+    & a {
+      padding: 0.45rem 1.1rem;
+      border-radius: 9px;
+      color: var(--muted);
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover {
+        color: var(--ink);
+      }
+
+      &[aria-current="page"] {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+    }
+  }
+</style>

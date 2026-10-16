@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    # Tiene que coincidir con la rama por defecto del repo: si no, los merges a la default no
+    # disparan nada y el hueco no avisa de su existencia.
+    branches: [main]
+  pull_request:
+  schedule:
+    # Los advisories nuevos aparecen sin que cambie el código: revisión semanal.
+    - cron: "0 6 * * 1"
+
+# Mínimo privilegio: el job solo lee el repo. Un step que necesite escribir lo pide explícitamente.
+permissions:
+  contents: read
+
+# Un push nuevo a la misma PR cancela el run anterior; en main se dejan terminar todos para no
+# perder la señal de un commit ya integrado.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # El token quedaría en .git/config al alcance de cualquier step posterior, incluido el
+          # script de una dependencia. Este workflow no hace push.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Dependencias
+        run: npm ci
+
+      - name: Firmas del registro
+        run: npm audit signatures
+
+      - name: Formato
+        run: npx prettier --check .
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos
+        run: npm run check
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Auditoría de dependencias
+        run: npm audit --audit-level=high

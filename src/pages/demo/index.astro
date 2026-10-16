@@ -1,0 +1,375 @@
+---
+import DemoEncabezado from "../../components/DemoEncabezado.astro";
+import Plano from "../../components/Plano.astro";
+import Base from "../../layouts/Base.astro";
+import { UMA, UMBRAL_UMAS } from "../../lib/calculadora";
+import {
+  APARTADOS,
+  CLIENTES,
+  contratos,
+  cuenta,
+  dias,
+  HOY,
+  LOTES,
+  maxSeisMeses,
+  MENSUALIDADES,
+  recordatorio,
+} from "../../lib/cartera";
+import { fecha, pesos } from "../../lib/formato";
+
+const filas = contratos()
+  .map((v) => ({ ...v, e: cuenta(v.contrato, HOY) }))
+  .map((v) => ({
+    ...v,
+    mensaje: recordatorio(v.cliente, v.contrato, v.e, HOY),
+  }))
+  .toSorted(
+    (a, b) =>
+      b.e.vencido + b.e.moratorio - (a.e.vencido + a.e.moratorio) ||
+      a.contrato.lote - b.contrato.lote,
+  );
+const mes = HOY.slice(0, 7);
+const cobradoMes = filas
+  .flatMap((f) => f.contrato.pagos)
+  .filter(([f]) => f.startsWith(mes))
+  .reduce((s, [, monto]) => s + monto, 0);
+const conAtraso = filas.filter((f) => f.e.vencido > 0);
+const destacado = filas.find((f) => f.contrato.lote === 7);
+
+const umbral = UMA * UMBRAL_UMAS;
+const antilavado = CLIENTES.map((cliente) => ({
+  cliente,
+  max: maxSeisMeses(cliente),
+}))
+  .toSorted((a, b) => b.max - a.max)
+  .slice(0, 5)
+  .map(({ cliente, max }) => {
+    const p = max / umbral;
+    const [chip, texto] =
+      p >= 1
+        ? ["chip-bad", "Revisar aviso"]
+        : p >= 0.75
+          ? ["chip-warn", "Cerca del umbral"]
+          : ["chip-ok", "Debajo del umbral"];
+    return { cliente, max, p, chip, texto };
+  });
+const whatsapp = (mensaje: string) =>
+  `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+---
+
+<Base
+  title="Demo: portal de cobranza para desarrolladoras de lotes"
+  description="Así se ve la cartera de una desarrolladora de lotes: plano con apartados y atrasos, saldos, moratorios, recordatorios por WhatsApp y alerta antilavado."
+>
+  <DemoEncabezado titulo="Cartera de lotes" />
+
+  <div class="contenedor rejilla">
+    <div class="columna">
+      <section class="panel" aria-label="Resumen de la cartera">
+        <dl class="stats">
+          <div>
+            <dt>Lotes vendidos</dt>
+            <dd class="v">
+              {filas.length} de {LOTES}
+            </dd>
+            <dd class="k">{APARTADOS.length} apartados</dd>
+          </div>
+          <div>
+            <dt>Cobrado en octubre</dt>
+            <dd class="v">{pesos(cobradoMes)}</dd>
+          </div>
+          <div>
+            <dt>Por cobrar</dt>
+            <dd class="v">{pesos(filas.reduce((s, f) => s + f.e.saldo, 0))}</dd>
+          </div>
+          <div>
+            <dt>Vencido + moratorio</dt>
+            <dd class="v">
+              {pesos(
+                conAtraso.reduce((s, f) => s + f.e.vencido + f.e.moratorio, 0),
+              )}
+            </dd>
+            <dd class="k">{conAtraso.length} compradores con atraso</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="panel" aria-labelledby="h-plano">
+        <h2 id="h-plano">Plano · Manzana 4</h2>
+        <p class="k">
+          Toca un lote vendido para abrir el estado de cuenta de su comprador.
+        </p>
+        <Plano />
+        <ul class="leyenda" aria-label="Leyenda del plano">
+          <li class="l-vendido">Vendido al corriente</li>
+          <li class="l-atrasado">Vendido con atraso</li>
+          <li class="l-apartado">Apartado</li>
+          <li class="l-disponible">Disponible</li>
+        </ul>
+        <ul class="lista">
+          {APARTADOS.map(({ lote, hasta }) => (
+            <li>
+              <span>
+                Lote {lote}: apartado hasta el {fecha(hasta)}
+              </span>
+              {hasta < HOY ? (
+                <span class="chip chip-bad">Venció: liberar el lote</span>
+              ) : (
+                <span class="chip chip-warn">
+                  Faltan {dias(HOY, hasta)} días
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="panel" aria-labelledby="h-compradores">
+        <h2 id="h-compradores">Compradores</h2>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Lote</th>
+                <th scope="col">Comprador</th>
+                <th scope="col">Pagadas</th>
+                <th scope="col" class="num">
+                  Saldo
+                </th>
+                <th scope="col" class="num">
+                  Vencido
+                </th>
+                <th scope="col">Estatus</th>
+                <th scope="col">
+                  <span class="visualmente-oculto">Acciones</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filas.map(({ cliente, contrato, e, mensaje }) => (
+                <tr>
+                  <td>{contrato.lote}</td>
+                  <td class="nombre">{cliente.nombre}</td>
+                  <td>
+                    {contrato.contado
+                      ? "Contado"
+                      : `${e.pagadas} / ${MENSUALIDADES}`}
+                  </td>
+                  <td class="num">{pesos(e.saldo)}</td>
+                  <td class="num">
+                    {e.vencido ? pesos(e.vencido + e.moratorio) : "—"}
+                  </td>
+                  <td>
+                    {e.vencido ? (
+                      <span class="chip chip-bad">
+                        {e.vencidas.length} vencida
+                        {e.vencidas.length > 1 ? "s" : ""}
+                      </span>
+                    ) : e.saldo === 0 ? (
+                      <span class="chip chip-ok">Liquidado</span>
+                    ) : (
+                      <span class="chip chip-ok">Al corriente</span>
+                    )}
+                  </td>
+                  <td>
+                    <span class="acciones-fila">
+                      <a
+                        class="btn btn-chico"
+                        href={`/demo/lotes/${contrato.lote}/`}
+                        aria-label={`Estado de cuenta del lote ${contrato.lote}`}
+                      >
+                        Ver
+                      </a>
+                      {mensaje && (
+                        <a
+                          class="btn btn-chico"
+                          href={whatsapp(mensaje)}
+                          target="_blank"
+                          rel="noopener"
+                          aria-label={`Recordatorio por WhatsApp a ${cliente.nombre} (se abre en otra pestaña)`}
+                        >
+                          WhatsApp
+                        </a>
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna">
+      {destacado?.mensaje && (
+        <section class="panel" aria-labelledby="h-recordatorio">
+          <h2 id="h-recordatorio">Recordatorio por WhatsApp</h2>
+          <p class="k">
+            Para {destacado.cliente.nombre} · Lote {destacado.contrato.lote}
+          </p>
+          <p class="mensaje">{destacado.mensaje}</p>
+          <a
+            class="btn btn-primario"
+            href={whatsapp(destacado.mensaje)}
+            target="_blank"
+            rel="noopener"
+          >
+            Abrir en WhatsApp
+          </a>
+          <p class="k">
+            Cada comprador de la tabla tiene el suyo, con su saldo y su
+            referencia de pago.
+          </p>
+        </section>
+      )}
+
+      <section class="panel" aria-labelledby="h-antilavado">
+        <h2 id="h-antilavado">Antilavado</h2>
+        <p class="k">
+          Lo más que cada cliente ha pagado en 6 meses, sumando todos sus lotes,
+          contra el umbral de 8,025 UMA ({pesos(umbral)} con la UMA de 2026).
+        </p>
+        <ul class="lista antilavado">
+          {antilavado.map(({ cliente, max, p, chip, texto }) => (
+            <li>
+              <span>{cliente.nombre}</span>
+              <span class={`chip ${chip}`}>{texto}</span>
+              <meter
+                min="0"
+                max="1"
+                low="0.75"
+                high="0.999"
+                optimum="0"
+                value={Math.min(p, 1)}
+                aria-label={`${cliente.nombre}: ${Math.round(p * 100)} % del umbral`}
+              />
+              <span class="k">
+                {pesos(max)} en 6 meses · {Math.round(p * 100)} % del umbral
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p class="k">
+          Expediente de Inversiones Península: identificación y RFC completos;
+          falta el beneficiario controlador.
+        </p>
+        <p class="callout callout-warn">
+          Es un apoyo de cálculo: la persona responsable de cumplimiento decide
+          si la operación requiere aviso.
+        </p>
+      </section>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    gap: 1.25rem;
+    align-items: start;
+
+    @media (max-width: 64rem) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .columna {
+    display: grid;
+    gap: 1.25rem;
+    min-inline-size: 0;
+  }
+
+  .leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    margin: 0;
+    padding: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+    list-style: none;
+
+    & li::before {
+      content: "";
+      display: inline-block;
+      inline-size: 0.7rem;
+      block-size: 0.7rem;
+      margin-inline-end: 0.4rem;
+      border-radius: 2px;
+      vertical-align: -0.05rem;
+    }
+  }
+
+  .l-vendido::before {
+    background: var(--accent);
+  }
+
+  .l-atrasado::before {
+    background: var(--bad);
+  }
+
+  .l-apartado::before {
+    background: var(--gold);
+  }
+
+  .l-disponible::before {
+    background: var(--lot-free);
+  }
+
+  .lista {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0;
+    font-size: 0.92rem;
+    list-style: none;
+
+    & li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  .antilavado li {
+    & meter,
+    & .k {
+      flex-basis: 100%;
+    }
+  }
+
+  .nombre {
+    min-inline-size: 9rem;
+    white-space: normal;
+  }
+
+  .acciones-fila {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .mensaje {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: 12px 12px 12px 4px;
+    background: var(--accent-soft);
+    font-size: 0.92rem;
+  }
+
+  .callout {
+    margin: 0;
+  }
+
+  .visualmente-oculto {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

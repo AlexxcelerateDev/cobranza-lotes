@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Página no encontrada"
+  description="La página que buscas no existe."
+  noindex
+>
+  <section class="contenedor no-encontrada">
+    <p class="eyebrow">Error 404</p>
+    <h1>Este lote no está en el plano</h1>
+    <p class="lede">La página que buscas no existe o cambió de dirección.</p>
+    <div class="acciones">
+      <a class="btn btn-primario" href="/">
+        Volver al inicio
+      </a>
+      <a class="btn" href="/calculadora/">
+        Abrir la calculadora
+      </a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .no-encontrada {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    padding-block: clamp(4rem, 12vw, 8rem);
+
+    & h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+  }
+</style>
