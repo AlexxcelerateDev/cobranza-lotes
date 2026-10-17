@@ -194,6 +194,8 @@ const actual = (href: string) =>
     border-block-end: 1px solid var(--line);
     background: color-mix(in srgb, var(--bg) 85%, transparent);
     backdrop-filter: blur(12px);
+    /* En la transición entre páginas se queda quieta en vez de fundirse con el resto. */
+    view-transition-name: cabecera;
   }
 
   .cabecera-fila {

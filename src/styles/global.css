@@ -124,6 +124,9 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Recorta el espacio de la fuente sobre las mayúsculas y bajo la línea base: el texto queda
+     centrado a la vista, no por la caja de la fuente. Donde no hay soporte, no cambia nada. */
+  text-box: trim-both cap alphabetic;
   gap: 0.5rem;
   min-block-size: 2.75rem;
   padding: 0.6rem 1.15rem;
@@ -264,6 +267,12 @@ a {
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+
+  /* Con el texto recortado a la altura de las mayúsculas, el relleno pone la altura. */
+  @supports (text-box: trim-both cap alphabetic) {
+    padding-block: 0.5em;
+    text-box: trim-both cap alphabetic;
+  }
 }
 
 .chip-ok {
@@ -384,10 +393,15 @@ tr:last-child td {
 }
 
 /* Transiciones entre páginas nativas del navegador (cross-document view transitions), sin
-   `<ClientRouter />` ni JavaScript. Donde no hay soporte, la navegación es la normal. */
+   `<ClientRouter />` ni JavaScript. Donde no hay soporte, la navegación es la normal.
+   `interpolate-size` deja animar hacia `height: auto` (solo Chromium; en el resto, salto). */
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
+  }
+
+  :root {
+    interpolate-size: allow-keywords;
   }
 }
 

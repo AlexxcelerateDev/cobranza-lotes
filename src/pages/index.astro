@@ -590,6 +590,49 @@ const preguntas = [
     &[open] summary::after {
       rotate: 45deg;
     }
+
+    /* `::details-content` (Baseline 2025) abre y cierra la respuesta deslizando. */
+    @media (prefers-reduced-motion: no-preference) {
+      &::details-content {
+        block-size: 0;
+        overflow: clip;
+        transition:
+          block-size 0.3s ease,
+          content-visibility 0.3s allow-discrete;
+      }
+
+      &[open]::details-content {
+        block-size: auto;
+      }
+    }
+  }
+
+  /* Las tarjetas aparecen al entrar en pantalla, una tras otra (`sibling-index()`). Corre en
+     Chrome, Edge y Safari 26; sin soporte o con movimiento reducido se ven quietas. El rango
+     termina al entrar del todo: ninguna se queda a medias aunque no se pueda seguir bajando. */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .tres article,
+      .modulo,
+      .pasos li,
+      .dato {
+        /* Propiedades sueltas, no el shorthand `animation`: el minificador del build mete
+           `animation-timeline` dentro del shorthand, donde no es válido, y la regla se pierde. */
+        animation-name: aparecer;
+        animation-fill-mode: both;
+        animation-timing-function: linear;
+        animation-timeline: view();
+        animation-range: entry 0% entry 100%;
+        animation-range: entry calc((sibling-index() - 1) * 15%) entry 100%;
+      }
+    }
+  }
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      translate: 0 1.5rem;
+    }
   }
 
   summary {

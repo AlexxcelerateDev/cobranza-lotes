@@ -41,6 +41,10 @@ viejo `npm ci` falla por `devEngines`, a propósito: la política de `.npmrc` no
   7.4.0 tenía menos de una semana y entró la 7.3.8.
 - **Una dependencia nueva puede romper la instalación** con `ESTRICTALLOWSCRIPTS`: trae un
   script de instalación y hay que decidirlo (`.claude/rules/00-toolchain.md`).
+- **`animation` + `animation-timeline` no se escriben juntos.** Lightning CSS (el minificador de
+  Vite 8) mete `animation-timeline` dentro del shorthand `animation`, donde no es válido, y el
+  navegador descarta la declaración: la animación de scroll desaparece sin error. Con una línea de
+  tiempo, siempre propiedades sueltas (`animation-name`…). Verificado con lightningcss 1.33.
 - **TypeScript está fijado a `~6.0`**: el 7 ya salió, pero `@astrojs/check` y `typescript-eslint`
   no lo soportan. Un `npm update` no lo sube; hacerlo a mano rompe `astro check` y el lint.
 
