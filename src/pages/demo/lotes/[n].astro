@@ -300,6 +300,8 @@ const folio = `LC-M4-L${String(contrato.lote).padStart(2, "0")}`;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 0.15rem 0.75rem;
+      /* Sin esto la etiqueta se estira a la altura de un título de dos líneas. */
+      align-items: baseline;
     }
   }
 </style>
