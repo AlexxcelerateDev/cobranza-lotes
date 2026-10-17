@@ -1,6 +1,7 @@
 ---
 import { DESARROLLO, HOY } from "../lib/cartera";
 import { fecha } from "../lib/formato";
+import { ruta } from "../lib/sitio";
 
 interface Props {
   titulo: string;
@@ -21,12 +22,15 @@ const { titulo, lote } = Astro.props;
   </div>
   <nav class="vistas" aria-label="Vista de la demo">
     <a
-      href={`/demo/lotes/${lote ?? 7}/`}
+      href={ruta(`/demo/lotes/${lote ?? 7}/`)}
       aria-current={lote === undefined ? undefined : "page"}
     >
       Comprador
     </a>
-    <a href="/demo/" aria-current={lote === undefined ? "page" : undefined}>
+    <a
+      href={ruta("/demo/")}
+      aria-current={lote === undefined ? "page" : undefined}
+    >
       Desarrolladora
     </a>
   </nav>

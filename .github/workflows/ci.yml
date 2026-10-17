@@ -59,3 +59,29 @@ jobs:
 
       - name: Auditoría de dependencias
         run: npm audit --audit-level=high
+
+      # Se publica exactamente el `dist/` que acaba de pasar el gate, no un build aparte.
+      - name: Artefacto de GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/
+
+  deploy:
+    # Solo lo que entra en main con el gate en verde; el cron semanal y las PR no publican.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: ci
+    runs-on: ubuntu-latest
+    # Los únicos permisos de escritura del workflow, y solo en este job: publicar en Pages y
+    # pedir el token OIDC que lo autoriza. Sin `contents`: no lee el repo.
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+
+    steps:
+      - name: Publicar en GitHub Pages
+        id: despliegue
+        uses: actions/deploy-pages@v5

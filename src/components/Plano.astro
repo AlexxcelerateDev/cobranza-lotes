@@ -1,5 +1,6 @@
 ---
 import { estadoLote, HOY, LOTES } from "../lib/cartera";
+import { ruta } from "../lib/sitio";
 
 interface Props {
   /** Vista del comprador: solo se marca su lote y no hay enlaces. Sin él, la de la desarrolladora. */
@@ -18,7 +19,7 @@ const lotes = Array.from({ length: LOTES }, (_, i) => {
     y: n <= 12 ? 8 : 134,
     clase: lote === undefined ? e.tipo : n === lote ? "propio" : "disponible",
     texto: `Lote ${n}, ${e.texto}`,
-    href: lote === undefined && vendido ? `/demo/lotes/${n}/` : null,
+    href: lote === undefined && vendido ? ruta(`/demo/lotes/${n}/`) : null,
   };
 });
 ---

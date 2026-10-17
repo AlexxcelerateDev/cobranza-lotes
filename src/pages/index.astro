@@ -9,7 +9,7 @@ import {
   mensualidadesVencidas,
 } from "../lib/cartera";
 import { fecha, pesos } from "../lib/formato";
-import { FORM_URL, NOMBRE } from "../lib/sitio";
+import { FORM_URL, NOMBRE, ruta } from "../lib/sitio";
 
 // La tarjeta del encabezado es el estado de cuenta real del lote 7 de la demo.
 const ejemplo = contratos().find(({ contrato }) => contrato.lote === 7);
@@ -69,7 +69,7 @@ const preguntas = [
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: NOMBRE,
-    url: new URL("/", Astro.site).href,
+    url: new URL(ruta("/"), Astro.site).href,
     inLanguage: "es-MX",
   }}
 >
@@ -89,20 +89,20 @@ const preguntas = [
           <a class="btn btn-primario" href={FORM_URL}>
             Únete al piloto gratuito
           </a>
-          <a class="btn" href="/demo/">
+          <a class="btn" href={ruta("/demo/")}>
             Ver la demo
           </a>
         </div>
         <p class="k">
           ¿Solo quieres hacer cuentas? Prueba la{" "}
-          <a href="/calculadora/">calculadora de plan de pagos</a>.
+          <a href={ruta("/calculadora/")}>calculadora de plan de pagos</a>.
         </p>
       </div>
 
       {ejemplo && e && (
         <a
           class="tarjeta"
-          href="/demo/lotes/7/"
+          href={ruta("/demo/lotes/7/")}
           aria-label="Ejemplo de estado de cuenta del lote 7: abrir la demo"
         >
           <span class="tarjeta-cabeza">
@@ -203,7 +203,7 @@ const preguntas = [
             comprador. Vender en regla se nota.
           </p>
         </div>
-        <a class="btn" href="/demo/lotes/7/">
+        <a class="btn" href={ruta("/demo/lotes/7/")}>
           Ver el portal del comprador
         </a>
       </div>
@@ -223,7 +223,7 @@ const preguntas = [
           seis meses.
         </p>
         <div class="acciones">
-          <a class="btn btn-primario" href="/calculadora/">
+          <a class="btn btn-primario" href={ruta("/calculadora/")}>
             Abrir la calculadora
           </a>
         </div>

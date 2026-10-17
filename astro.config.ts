@@ -4,8 +4,11 @@ import { defineConfig, fontProviders } from "astro/config";
 // https://docs.astro.build/en/reference/configuration-reference/
 export default defineConfig({
   // URL pública del sitio: la usan la canónica y `og:url`/`og:image` de `Base.astro`, el sitemap
-  // y `robots.txt`. Cambiarla por la real al elegir dominio.
-  site: "https://example.com",
+  // y `robots.txt`. Es GitHub Pages sin dominio propio: el sitio vive en la subcarpeta del repo,
+  // `base`. Todo enlace interno pasa por `ruta()` de `src/lib/sitio.ts`; con un dominio propio,
+  // `site` cambia y `base` se borra.
+  site: "https://alexxceleratedev.github.io",
+  base: "/cobranza-lotes",
   // Una sola forma de cada URL. Con el default (`ignore`) `/demo` y `/demo/` responden los dos en
   // dev, y un enlace sin barra solo se descubre cuando el hosting lo redirige o da 404.
   // `always` casa con `build.format: 'directory'` (el default: `demo/index.html`).

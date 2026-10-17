@@ -16,6 +16,7 @@ import {
   recordatorio,
 } from "../../lib/cartera";
 import { fecha, pesos } from "../../lib/formato";
+import { ruta } from "../../lib/sitio";
 
 const filas = contratos()
   .map((v) => ({ ...v, e: cuenta(v.contrato, HOY) }))
@@ -175,7 +176,7 @@ const whatsapp = (mensaje: string) =>
                     <span class="acciones-fila">
                       <a
                         class="btn btn-chico"
-                        href={`/demo/lotes/${contrato.lote}/`}
+                        href={ruta(`/demo/lotes/${contrato.lote}/`)}
                         aria-label={`Estado de cuenta del lote ${contrato.lote}`}
                       >
                         Ver

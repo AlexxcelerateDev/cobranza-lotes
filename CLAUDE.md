@@ -20,9 +20,11 @@ viejo `npm ci` falla por `devEngines`, a propósito: la política de `.npmrc` no
 
 ## Comandos
 
-- `npm run dev`: servidor de desarrollo en `http://localhost:4321`.
+- `npm run dev`: servidor de desarrollo en `http://localhost:4321/cobranza-lotes/`.
 - `npm run build && npm run preview`: el sitio tal como se publica. **Es el único sitio donde se
-  ve la CSP**: en `dev` no se aplica, y un script bloqueado solo aparece aquí.
+  ve la CSP y donde se mide con Lighthouse**: en `dev` la CSP no se aplica, y el JavaScript sin
+  minificar de Vite y la barra de Astro (~2 MB) bajan el rendimiento a ~58. El build da 100 en
+  las cuatro páginas (Lighthouse 13.5, móvil, 2026-10-16).
 
 ## Claude Code
 
@@ -65,8 +67,12 @@ viejo `npm ci` falla por `devEngines`, a propósito: la política de `.npmrc` no
 - **Iconos**: `public/favicon.svg` es el original; `favicon.ico` (32 px) y
   `apple-touch-icon.png` (180 px, sin esquinas redondeadas) salen de él con `sharp`. Cambiar el
   logo es regenerar los tres.
-- **Dominio pendiente**: `site` sigue en `https://example.com`. Hasta que cambie, la canónica,
-  `og:url`, `og:image`, el sitemap y `robots.txt` apuntan a otro sitio.
+- **Publicado en GitHub Pages sin dominio propio**:
+  `https://alexxceleratedev.github.io/cobranza-lotes/`, con `base: "/cobranza-lotes"`. **Todo
+  enlace interno pasa por `ruta()`** (`src/lib/sitio.ts`): uno escrito a mano como `/demo/` sale
+  de la subcarpeta y da 404, también en `npm run dev`. En una subcarpeta Google no lee
+  `robots.txt`: el sitemap se envía en Search Console. Con dominio propio, `site` cambia, `base`
+  se borra y `ruta()` sigue funcionando.
 - La UMA (`UMA` en `calculadora.ts`) es la de 2026: se actualiza cada enero con la que publique el
   INEGI.
 

@@ -1,7 +1,7 @@
 ---
 import { Font } from "astro:assets";
 import "../styles/global.css";
-import { FORM_URL, NOMBRE } from "../lib/sitio";
+import { FORM_URL, NOMBRE, ruta } from "../lib/sitio";
 
 interface Props {
   title: string;
@@ -13,15 +13,15 @@ interface Props {
 }
 
 const { title, description, noindex = false, jsonLd } = Astro.props;
-const ruta = Astro.url.pathname;
-const canonical = new URL(ruta, Astro.site).href;
-const imagen = new URL("/og.png", Astro.site).href;
+const pathname = Astro.url.pathname; // incluye la base
+const canonical = new URL(pathname, Astro.site).href;
+const imagen = new URL(ruta("/og.png"), Astro.site).href;
 const nav = [
-  { href: "/calculadora/", texto: "Calculadora" },
-  { href: "/demo/", texto: "Demo" },
+  { href: ruta("/calculadora/"), texto: "Calculadora" },
+  { href: ruta("/demo/"), texto: "Demo" },
 ];
 const actual = (href: string) =>
-  ruta === href ? "page" : ruta.startsWith(href) ? "true" : undefined;
+  pathname === href ? "page" : pathname.startsWith(href) ? "true" : undefined;
 ---
 
 <!doctype html>
@@ -62,10 +62,10 @@ const actual = (href: string) =>
     />
     <!-- El SVG es el icono; el `.ico` es para lo que no lee SVG (y para quien pide
          `/favicon.ico` sin mirar el HTML). `sizes` evita que Chrome prefiera el `.ico`. -->
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="icon" href={ruta("/favicon.ico")} sizes="32x32" />
+    <link rel="icon" href={ruta("/favicon.svg")} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={ruta("/apple-touch-icon.png")} />
+    <link rel="sitemap" href={ruta("/sitemap-index.xml")} />
     <Font cssVariable="--font-display" preload />
     <Font cssVariable="--font-body" preload />
     {jsonLd && (
@@ -81,7 +81,7 @@ const actual = (href: string) =>
     </a>
     <header class="cabecera">
       <div class="contenedor cabecera-fila">
-        <a class="marca" href="/">
+        <a class="marca" href={ruta("/")}>
           <svg viewBox="0 0 32 32" aria-hidden="true">
             <rect width="32" height="32" rx="7" class="marca-fondo"></rect>
             <rect
@@ -150,13 +150,13 @@ const actual = (href: string) =>
         <nav aria-label="Pie de página">
           <ul>
             <li>
-              <a href="/">Inicio</a>
+              <a href={ruta("/")}>Inicio</a>
             </li>
             <li>
-              <a href="/calculadora/">Calculadora de plan de pagos</a>
+              <a href={ruta("/calculadora/")}>Calculadora de plan de pagos</a>
             </li>
             <li>
-              <a href="/demo/">Demo del portal</a>
+              <a href={ruta("/demo/")}>Demo del portal</a>
             </li>
             <li>
               <a href={FORM_URL}>Registro al piloto</a>

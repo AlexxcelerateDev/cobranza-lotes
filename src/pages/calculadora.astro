@@ -8,7 +8,7 @@ import {
   UMBRAL_UMAS,
 } from "../lib/calculadora";
 import { fecha, pesos } from "../lib/formato";
-import { FORM_URL } from "../lib/sitio";
+import { FORM_URL, ruta } from "../lib/sitio";
 
 // El primer esquema sale calculado en el HTML: la página se lee entera sin esperar al script.
 const r = calcular(inicial);
@@ -31,7 +31,7 @@ const descripcion =
     "@type": "WebApplication",
     name: titulo,
     description: descripcion,
-    url: new URL("/calculadora/", Astro.site).href,
+    url: new URL(ruta("/calculadora/"), Astro.site).href,
     applicationCategory: "FinanceApplication",
     operatingSystem: "Web",
     inLanguage: "es-MX",
@@ -309,7 +309,7 @@ const descripcion =
           <a class="btn" href={FORM_URL}>
             Quiero el piloto
           </a>
-          <a class="btn btn-claro" href="/demo/">
+          <a class="btn btn-claro" href={ruta("/demo/")}>
             Ver el portal de ejemplo
           </a>
         </div>

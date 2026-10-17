@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import { ruta } from "../lib/sitio";
 ---
 
 <Base
@@ -12,10 +13,10 @@ import Base from "../layouts/Base.astro";
     <h1>Este lote no está en el plano</h1>
     <p class="lede">La página que buscas no existe o cambió de dirección.</p>
     <div class="acciones">
-      <a class="btn btn-primario" href="/">
+      <a class="btn btn-primario" href={ruta("/")}>
         Volver al inicio
       </a>
-      <a class="btn" href="/calculadora/">
+      <a class="btn" href={ruta("/calculadora/")}>
         Abrir la calculadora
       </a>
     </div>
