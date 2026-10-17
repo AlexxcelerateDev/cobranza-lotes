@@ -60,7 +60,11 @@ const actual = (href: string) =>
       media="(prefers-color-scheme: dark)"
       content="#0d1311"
     />
+    <!-- El SVG es el icono; el `.ico` es para lo que no lee SVG (y para quien pide
+         `/favicon.ico` sin mirar el HTML). `sizes` evita que Chrome prefiera el `.ico`. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <Font cssVariable="--font-display" preload />
     <Font cssVariable="--font-body" preload />

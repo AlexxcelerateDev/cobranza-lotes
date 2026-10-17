@@ -62,6 +62,9 @@ viejo `npm ci` falla por `devEngines`, a propósito: la política de `.npmrc` no
   ficticios.
 - **Nombre provisional** «Lotes al Día»: en `src/lib/sitio.ts` y dentro de `public/og.png`
   (1200 × 630, hecha con `sharp` desde un SVG). Cambiar el nombre es cambiar los dos.
+- **Iconos**: `public/favicon.svg` es el original; `favicon.ico` (32 px) y
+  `apple-touch-icon.png` (180 px, sin esquinas redondeadas) salen de él con `sharp`. Cambiar el
+  logo es regenerar los tres.
 - **Dominio pendiente**: `site` sigue en `https://example.com`. Hasta que cambie, la canónica,
   `og:url`, `og:image`, el sitemap y `robots.txt` apuntan a otro sitio.
 - La UMA (`UMA` en `calculadora.ts`) es la de 2026: se actualiza cada enero con la que publique el
